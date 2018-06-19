@@ -27,6 +27,29 @@ import net.sf.json.JSON
 import org.jenkinsci.plugins.workflow.cps.DSL
 
 /**
+ * Tries to retrieve credentials for the given host by using configurations provided in
+ * resources/credentials/http/credentials.json
+ *
+ * @param uri The uri to retrieve the credentials for
+ * @return The found Credential object or null when no credential object was found during auto lookup
+ * @see io.wcm.devops.jenkins.pipeline.credentials.Credential
+ * @see io.wcm.devops.jenkins.pipeline.credentials.CredentialParser
+ * @see JsonLibraryResource
+ * @see io.wcm.devops.jenkins.pipeline.credentials.CredentialConstants
+ */
+Credential lookupHttpCredential(String uri) {
+  // load the json
+  JsonLibraryResource jsonRes = new JsonLibraryResource((DSL) this.steps, CredentialConstants.HTTP_CREDENTIALS_PATH)
+  JSON credentialJson = jsonRes.load()
+  // parse the credentials
+  CredentialParser parser = new CredentialParser()
+  List<Credential> credentials = parser.parse(credentialJson)
+  // try to find matching credential and return the credential
+  PatternMatcher matcher = new PatternMatcher()
+  return (Credential) matcher.getBestMatch(uri, credentials)
+}
+
+/**
  * Tries to retrieve credentials for the given scmUrl by using configurations provided in
  * resources/credentials/scm/credentials.json
  *
@@ -72,25 +95,3 @@ Credential lookupSshCredential(String host) {
   return (Credential) matcher.getBestMatch(host, credentials)
 }
 
-/**
- * Tries to retrieve credentials for the given host by using configurations provided in
- * resources/credentials/http/credentials.json
- *
- * @param uri The uri to retrieve the credentials for
- * @return The found Credential object or null when no credential object was found during auto lookup
- * @see io.wcm.devops.jenkins.pipeline.credentials.Credential
- * @see io.wcm.devops.jenkins.pipeline.credentials.CredentialParser
- * @see JsonLibraryResource
- * @see io.wcm.devops.jenkins.pipeline.credentials.CredentialConstants
- */
-Credential lookupHttpCredential(String uri) {
-  // load the json
-  JsonLibraryResource jsonRes = new JsonLibraryResource((DSL) this.steps, CredentialConstants.HTTP_CREDENTIALS_PATH)
-  JSON credentialJson = jsonRes.load()
-  // parse the credentials
-  CredentialParser parser = new CredentialParser()
-  List<Credential> credentials = parser.parse(credentialJson)
-  // try to find matching credential and return the credential
-  PatternMatcher matcher = new PatternMatcher()
-  return (Credential) matcher.getBestMatch(uri, credentials)
-}
